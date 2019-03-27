@@ -1,4 +1,4 @@
-from conans import ConanFile, CMake, tools
+from conans import ConanFile, tools, AutoToolsBuildEnvironment
 import os
 
 
@@ -31,35 +31,33 @@ class LibsndfileConan(ConanFile):
             url = url_base + "libsndfile-%s.tar.gz" % self.version
             sha256 = "1ff33929f042fa333aed1e8923aa628c3ee9e1eb85512686c55092d1e5a9dfa9"
             tools.get(url, sha256=sha256)
-            # This small hack might be useful to guarantee proper /MT /MD linkage
-            # in MSVC if the packaged project doesn't have variables to set it
-            # properly
-            """
-            tools.replace_in_file("hello/CMakeLists.txt", "PROJECT(MyHello)",
-                                '''PROJECT(MyHello)
-    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-    conan_basic_setup()''')
-            """
+            os.rename("libsndfile-" + self.version, "src")
 
     def build(self):
         if self.settings.os == "Windows":
             pass
         else:
-            # TODO
-            cmake = CMake(self)
-            cmake.configure(source_folder="libsndfile-" + self.version)
-            cmake.build()
+            with tools.chdir("src"):
+                env_build = AutoToolsBuildEnvironment(self)
+                def option_value(b):
+                    return "yes" if b else "no"
+                args = [
+                    "--enable-shared=" + option_value(self.options.shared),
+                    "--enable-static=" + option_value(not self.options.shared),
+                ]
+                env_build.configure(args=args)
+                env_build.make()
+                env_build.install()
+
 
     def package(self):
-        self.copy("*")
-        """
-        self.copy("*.h", dst="include", src="hello")
-        self.copy("*hello.lib", dst="lib", keep_path=False)
-        self.copy("*.dll", dst="bin", keep_path=False)
-        self.copy("*.so", dst="lib", keep_path=False)
-        self.copy("*.dylib", dst="lib", keep_path=False)
-        self.copy("*.a", dst="lib", keep_path=False)
-        """
+        if self.settings.os == "Windows":
+            self.copy("*")
+        else:
+            pass
 
     def package_info(self):
-        self.cpp_info.libs = ["libsndfile-1"]
+        if self.settings.os == "Windows":
+            self.cpp_info.libs = ["libsndfile-1"]
+        else:
+            self.cpp_info.libs = ["sndfile"]
