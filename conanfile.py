@@ -12,7 +12,7 @@ class LibsndfileConan(ConanFile):
     topics = ("<Put some tag here>", "<here>", "<and here>")
     settings = "os", "compiler", "build_type", "arch"
     options = {"shared": [True, False]}
-    default_options = "shared=False"
+    default_options = "shared=True"
     generators = "cmake"
     url_base = "http://www.mega-nerd.com/libsndfile/files/"
 
