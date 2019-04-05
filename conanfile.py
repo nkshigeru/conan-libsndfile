@@ -11,8 +11,6 @@ class LibsndfileConan(ConanFile):
     description = "<Description of Libsndfile here>"
     topics = ("<Put some tag here>", "<here>", "<and here>")
     settings = "os", "compiler", "build_type", "arch"
-    options = {"shared": [True, False]}
-    default_options = "shared=True"
     generators = "cmake"
     url_base = "http://www.mega-nerd.com/libsndfile/files/"
 
@@ -43,11 +41,8 @@ class LibsndfileConan(ConanFile):
         else:
             with tools.chdir("src"):
                 env_build = AutoToolsBuildEnvironment(self)
-                def option_value(b):
-                    return "yes" if b else "no"
                 args = [
-                    "--enable-shared=" + option_value(self.options.shared),
-                    "--enable-static=" + option_value(not self.options.shared),
+                    "--disable-static"
                 ]
                 env_build.configure(args=args)
                 env_build.make()
